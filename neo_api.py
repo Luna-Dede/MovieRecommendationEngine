@@ -19,7 +19,6 @@ class Neo4jAPI:
         self.sample = sample_data_obj.process_sample()
 
 
-
     def process_sample(self):
         pass
 
