@@ -1,21 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie App</title>
+    <title>Movie Carousel</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/movie-carousel.css') }}" rel="stylesheet">
 </head>
+
 <body>
-    <h1>Movie App</h1>
-    <form action="/add_movie" method="post">
-        {% for movie in movies %}
-            <input type="checkbox" name="movies" value="{{ movie.id }}">
-            <img src="http://image.tmdb.org/t/p/w185/{{ movie.poster_path }}" alt="{{ movie.title }}">
-            {{ movie.title }}
-            <br>
-        {% endfor %}
-        <input type="submit" value="Add to My List">
-    </form>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-center align-items-center">
+            <button id="prev-btn" class="btn btn-primary mr-3">Previous</button>
+            <div class="d-flex">
+                <div id="prev-container" class="img-container">
+                    <img id="prev-img" class="img-limited mx-1" src="" alt="Previous Movie">
+                    <div id="prev-title" class="movie-title"></div>
+                </div>
+                <div id="current-container" class="img-container">
+                    <img id="current-img" class="img-limited mx-1" src="" alt="Current Movie">
+                    <div id="current-title" class="movie-title"></div>
+                </div>
+                <div id="next-container" class="img-container">
+                    <img id="next-img" class="img-limited mx-1" src="" alt="Next Movie">
+                    <div id="next-title" class="movie-title"></div>
+                </div>
+            </div>
+            <button id="next-btn" class="btn btn-primary ml-3">Next</button>
+        </div>
+    </div>
+
+    <script id="movie-data" type="application/json">{{ movies|safe }}</script>
+    <script id="placeholder-url" type="text/plain">{{ url_for("static", filename="placeholder.png") }}</script>
+    <script src="{{ url_for('static', filename='js/jquery-3.6.4.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/movie-carousel.js') }}"></script>
 </body>
+
 </html>
+
