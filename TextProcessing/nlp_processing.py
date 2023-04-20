@@ -12,9 +12,6 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.metrics import jaccard_score
 
-from create_sample import SampleData
-
-
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, expr, split
@@ -40,7 +37,7 @@ nltk.download('omw-1.4')
 
 
 
-
+# jaccard similarity udf - Strictly for genres
 @udf(returnType=FloatType())
 def jaccard_similarity_udf(set1_str, set2_str):
     set1 = set(set1_str.split())
@@ -54,9 +51,9 @@ def jaccard_similarity_udf(set1_str, set2_str):
 class NLPProcessor:
 
     def __init__(self, sample):
+
         self.sample = sample
-        self.spark = None
-        self.processed_dataframe = None
+
 
   
 
@@ -86,6 +83,8 @@ class NLPProcessor:
 
 
     def extract_keywords(self, row):
+        """Exctract important features and concatenate them into a string
+            will be used of text processing"""
         keywords = str(row['keywords'])
         
         
@@ -94,14 +93,10 @@ class NLPProcessor:
         overview = row['overview']
         overview_keywords = ' '.join(self.preprocess_overview(overview))
 
-        genres = ' '.join(ast.literal_eval(row['genres'])).lower()
-
         year = str(row['release_date'])
 
         cast = row['cast']
 
-
-        
         combined_keywords = ' '.join([keywords, year, overview_keywords, directors, cast])
         
         return combined_keywords
@@ -112,10 +107,6 @@ class NLPProcessor:
     def process_text(self, sample):
         """Creates a sample dataframe and processes it using the 
             language processing functions"""
-        sample_data_obj = SampleData(self.dataframe)
-        sample_data_obj.create_sample(sample_size=sample_size)
-
-        sample = sample_data_obj.process_sample()
         sample['combined_keywords'] = sample.apply(self.extract_keywords, axis=1)
 
         sample['genres_set'] = sample.genres.apply(lambda genres: set(ast.literal_eval(genres)))
@@ -127,11 +118,12 @@ class NLPProcessor:
 
 
 
-    def process_with_spark(self):
-        processed_df = self.process_dataframe(sample_size)
+    def process_with_spark(self, sample):
+        """Uses Spark to run calculations (jaccard similarity calculation)"""
+        self.sample = self.process_text(sample)
 
         spark = SparkSession.builder.master("local[*]").appName("MovieRecommendation").getOrCreate()
-        spark_movies = spark.createDataFrame(processed_df)
+        spark_movies = spark.createDataFrame(sample)
 
 
         # Calculate the Jaccard similarity matrix using a Cartesian join
@@ -159,17 +151,33 @@ class NLPProcessor:
 
 
 
-    def similarity(self):
-        pass
+    def cosine_matrix(self, sample):
+        """Will return a matrix containing the cosine_similarity scores"""
 
+        stop = list(stopwords.words('english'))
 
-df = pd.read_csv("data/final_movie.csv")
-nlp_proc = NLPProcessor(df)
+        tfidf_vectorizer = TfidfVectorizer(analyzer = 'word', stop_words=list(set(stop)))
+        tfidf_matrix = tfidf_vectorizer.fit_transform(sample['combined_keywords'])
 
-print(nlp_proc.process_with_spark())
+        cosine_sim = cosine_similarity(tfidf_matrix)
 
-        
+        return cosine_sim
     
+
+    
+    def combine_matrix(self, jaccard_mat, cosine_mat):
+        """Combines both jaccard matrix and cosine matrix by assigning
+            weights"""
+        
+        jaccard_weight = 0.25
+        cosine_weight = 1 - jaccard_weight
+
+        combined_matrix = (jaccard_weight * jaccard_mat) + (cosine_weight * cosine_mat)
+
+        return combined_matrix
+    
+
+
 
 
 
