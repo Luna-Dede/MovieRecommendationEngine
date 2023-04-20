@@ -12,7 +12,7 @@ Before proceeding, make sure you have the following installed on your system:
 
 - Python 3.7 or higher
 - Pip (Python Package Installer)
-- 
+
 ### Dependencies
 
 Install the following Python packages using pip:
@@ -53,9 +53,11 @@ To set up the Neo4j server, follow these steps:
 ## How to run code:
 
 - First run the data_prep.ipynb file to generate the cleaned final dataset. This will be saved in a directory called data in the root directory 
-of the project
+of the project.
 
-
+- In the main.py file, change the URI, user, and password to match yours.
+- Make sure you are running the Neo4j browser
+- run the main.py - Keep in mind, this may take up to 10 minutes to process
 
 ###
 
